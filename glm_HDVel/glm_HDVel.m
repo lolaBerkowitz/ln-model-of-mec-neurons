@@ -69,9 +69,14 @@ frames(:,3)=rescale(frames(:,3),0,boxSize);
 post=frames(:,1);
 
 % spiketrain = vector of the # of spikes in each 33 ms time bin
+try
 spiketrain=histcounts(data.Spikes{celln}(data.Spikes{celln}>data.events(1,session) &...
     data.Spikes{celln}<data.events(2,session)),...
     linspace(post(1),post(end),length(post)+1))';
+catch
+    glm_res = NaN;
+    return
+end
 
 % posx_c = x-position in middle of LEDs
 posx_c = frames(:,2);
