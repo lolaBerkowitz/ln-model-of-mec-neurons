@@ -1,4 +1,4 @@
-function plot_hdVel_glm_res(data,session,glm_res,varargin)
+function plot_hdVel_glm_res(data,session,glm_res,celln,varargin)
 
 p = inputParser;
 addOptional(p,'n_pos_bins',20,@isnumeric)
@@ -30,17 +30,19 @@ direction = deg2rad(frames(:,4));
 speed = frames(:,5);
 angvel = insta_angvel(direction,data.samplerate,3);
 
+
 % take out times when the animal ran >= 50 cm/s
 too_fast = find(speed >= 100);
 posx_c(too_fast) = []; posy_c(too_fast) = []; 
 direction(too_fast) = [];
-speed(too_fast) = []; angvel(too_fast) = [];
+speed(too_fast) = []; angvel(too_fast) = []; spiketrain(too_fast) = []; 
+
 
 % compute tuning curves for position, head direction, speed, and theta phase
 [pos_curve] = compute_2d_tuning_curve(posx_c,posy_c,glm_res.smooth_fr,n_pos_bins,0,boxSize);
-[hd_curve] = compute_1d_tuning_curve(direction,glm_res.smooth_fr,n_dir_bins,0,2*pi);
-[speed_curve] = compute_1d_tuning_curve(speed,glm_res.smooth_fr,n_speed_bins,0,50);
-[angvel_curve] = compute_1d_tuning_curve(angvel,glm_res.smooth_fr,n_angvel_bins,0,1000);
+[hd_curve] = compute_1d_tuning_curve(direction,spiketrain,n_dir_bins,0,2*pi);
+[speed_curve] = compute_1d_tuning_curve(speed,spiketrain,n_speed_bins,0,50);
+[angvel_curve] = compute_1d_tuning_curve(angvel,spiketrain,n_angvel_bins,0,1000);
 
 % create x-axis vectors
 hd_vector = 2*pi/n_dir_bins/2:2*pi/n_dir_bins:2*pi - 2*pi/n_dir_bins/2;
@@ -177,8 +179,6 @@ function [tuning_curve] = compute_2d_tuning_curve(variable_x,variable_y,fr,numBi
 xAxis = linspace(minVal,maxVal,numBin+1);
 yAxis = linspace(minVal,maxVal,numBin+1);
 
-% initialize 
-tuning_curve = zeros(numBin,numBin);
 
 %% fill out the tuning curve
 
@@ -202,7 +202,6 @@ for i  = 1:numBin
         end
         
         ind = intersect(x_ind,y_ind);
-        
         % fill in rate map
         tuning_curve(numBin+1 - j,i) = mean(fr(ind));
     end
